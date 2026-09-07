@@ -684,7 +684,7 @@
     <div id="app-container">
         <!-- Status Banner -->
         <div id="status-banner" class="status-bar status-offline">
-            ⚠ Backend Connection Offline (Trying http://127.0.0.1:8000)
+            ⚠ Backend Connection Offline (Connecting to Render...)
         </div>
 
         <!-- Auth View -->
@@ -851,8 +851,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = "http://127.0.0.1:8000";
-        const WS_BASE_URL = "ws://127.0.0.1:8000";
+        const API_BASE_URL = "https://chapp-backend-codes.onrender.com";
+        const WS_BASE_URL = "wss://chapp-backend-codes.onrender.com";
 
         let currentUser = { phone_number: "", username: "", is_paid: false, profilePic: null };
         let activeContactPhone = null;
@@ -912,7 +912,7 @@
                 statusBanner.innerText = "✓ Backend Connection Online";
             } catch (err) {
                 statusBanner.className = "status-bar status-offline";
-                statusBanner.innerText = "⚠ Backend Connection Offline (Trying http://127.0.0.1:8000)";
+                statusBanner.innerText = "⚠ Backend Connection Offline (Connecting to Render...)";
             }
         }
         setInterval(runHealthCheck, 4000);
@@ -953,7 +953,7 @@
                     await fetchActiveContacts();
                 }
             } catch (err) {
-                alert("Authentication Failed. Ensure your backend is running on port 8000!");
+                alert("Authentication Failed. Ensure your Render backend service is online!");
             }
         });
 
@@ -1157,7 +1157,6 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // Updated Upload Function Integrated into the Reels Form Event
         async function uploadVideo(event) {
             event.preventDefault();
 
@@ -1169,20 +1168,18 @@
                 return;
             }
 
-            // Create Multipart Form Data
             const formData = new FormData();
-            formData.append("file", fileInput.files[0]); // Key MUST match backend endpoint definition
+            formData.append("file", fileInput.files[0]);
             formData.append("uploader_phone", currentUser.phone_number || "Anonymous");
             formData.append("caption", captionInput ? captionInput.value : "");
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/videos/upload-file`, {
                     method: "POST",
-                    body: formData // DO NOT set Content-Type header manually; fetch sets it with boundary
+                    body: formData
                 });
 
                 if (!response.ok) {
-                    // Read JSON detail from FastAPI error response
                     const errorData = await response.json().catch(() => null);
                     const detailMsg = errorData?.detail || `Server returned status ${response.status}`;
                     console.error("Upload server error details:", errorData);
@@ -1201,10 +1198,8 @@
             }
         }
 
-        // Bind form submit to uploadVideo
         document.getElementById("reels-form").addEventListener("submit", uploadVideo);
 
-        // REELS FEED WATCH & SCROLL FUNCTIONALITY
         openReelsFeedBtn.addEventListener("click", async () => {
             await fetchAndRenderReelsFeed();
             reelsModal.classList.add("open");
@@ -1212,7 +1207,6 @@
 
         closeReelsModal.addEventListener("click", () => {
             reelsModal.classList.remove("open");
-            // Pause all playing videos when closing modal
             const videos = reelsFeedContainer.querySelectorAll("video");
             videos.forEach(v => v.pause());
         });
@@ -1246,7 +1240,6 @@
                     reelsFeedContainer.appendChild(reelCard);
                 });
 
-                // Auto-play active video on scroll
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         const video = entry.target.querySelector("video");
