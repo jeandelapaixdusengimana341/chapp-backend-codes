@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapp — WhatsApp AI Translator & Reels</title>
+    <style>
+        :root {
+            --wa-bg: #eae6df;
+            --wa-teal: #008069;
+            --wa-teal-light: #00a884;
+            --wa-sidebar-bg: #ffffff;
+            --wa-chat-bg: #efeae2;
+            --wa-out-bubble: #d9fdd3;
+            --wa-in-bubble: #ffffff;
+            --wa-text-main: #111b21;
+            --wa-text-sub: #667781;
+            --border-color: #e9edef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--wa-bg);
+            color: var(--wa-text-main);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+        }
+
+        /* Top Warning/Status Bar */
+        .status-bar {
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .status-offline {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .status-online {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Auth Splash Screen */
+        .auth-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            background: linear-gradient(135deg, #008069 0%, #00a884 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: white;
+            color: var(--wa-text-main);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-card h2 {
+            margin-bottom: 8px;
+            color: var(--wa-teal);
+        }
+        .auth-card p {
+            font-size: 13px;
+            color: var(--wa-text-sub);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--wa-text-sub);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+        }
+        .form-group input:focus {
+            border-color: var(--wa-teal);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--wa-teal);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #006653;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 10px;
+            background-color: #111b21;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Main Workspace App Layout */
+        .main-workspace {
+            display: none;
+            flex: 1;
+            height: calc(100% - 30px);
+        }
+
+        /* Sidebar Container */
+        .sidebar {
+            width: 350px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background-color: var(--wa-sidebar-bg);
+            height: 100%;
+        }
+
+        /* User Header */
+        .user-header {
+            background-color: #f0f2f5;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-info-trigger {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--wa-teal);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            text-transform: uppercase;
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+        }
+
+        .user-meta h4 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .user-meta span {
+            font-size: 11px;
+            color: #fff;
+            background-color: var(--wa-teal-light);
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .header-actions button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--wa-text-sub);
+            padding: 4px;
+        }
+
+        /* Contacts Panel & List */
+        .search-contact-bar {
+            padding: 8px 14px;
+            background-color: #fff;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+        .search-contact-bar input {
+            flex: 1;
+            padding: 6px 12px;
+            background-color: #f0f2f5;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-contact-bar button {
+            padding: 6px 12px;
+            background-color: var(--wa-teal);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #fff;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .contact-item:hover {
+            background-color: #f0f2f5;
+        }
+        .contact-item.active {
+            background-color: #eae6df;
+        }
+
+        .contact-details h5 {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .contact-details p {
+            font-size: 13px;
+            color: var(--wa-text-sub);
+        }
+
+        /* Reels Pipeline Section */
+        .reels-pipeline-panel {
+            border-top: 1px solid var(--border-color);
+            background-color: #f8f9fa;
+            padding: 12px 16px;
+        }
+        .reels-pipeline-panel h5 {
+            font-size: 13px;
+            color: var(--wa-teal);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Chat Dashboard */
+        .chat-dashboard {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--wa-chat-bg);
+            height: 100%;
+            position: relative;
+        }
+
+        .welcome-fallback {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            padding: 40px;
+            background-color: #f8f9fa;
+        }
+        .welcome-fallback h3 {
+            font-size: 32px;
+            font-weight: 300;
+            color: #41525d;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .welcome-fallback p {
+            font-size: 14px;
+            color: var(--wa-text-sub);
+            max-width: 450px;
+            line-height: 20px;
+        }
+
+        .chat-stream-container {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-header {
+            background-color: #f0f2f5;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-target-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .translation-matrix-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        .translation-matrix-control label {
+            font-size: 12px;
+            color: var(--wa-text-sub);
+            font-weight: 500;
+        }
+        .translation-matrix-control select {
+            border: none;
+            outline: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--wa-teal);
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .messages-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 5%;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-repeat: repeat;
+        }
+
+        .message-bubble {
+            max-width: 65%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14.5px;
+            line-height: 19px;
+            position: relative;
+            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            clear: both;
+        }
+        
+        .bubble-out {
+            background-color: var(--wa-out-bubble);
+            float: right;
+        }
+        .bubble-in {
+            background-color: var(--wa-in-bubble);
+            float: left;
+        }
+
+        .bubble-timestamp {
+            font-size: 11px;
+            color: var(--wa-text-sub);
+            text-align: right;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .entry-interaction-tray {
+            background-color: #f0f2f5;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .entry-interaction-tray input {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background-color: #fff;
+            border-radius: 8px;
+            outline: none;
+            font-size: 15px;
+        }
+        .entry-interaction-tray button {
+            background-color: var(--wa-teal);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Profile Drawer */
+        .profile-drawer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 350px;
+            height: 100%;
+            background: #f0f2f5;
+            border-right: 1px solid var(--border-color);
+            z-index: 100;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            background-color: var(--wa-teal);
+            color: white;
+            padding: 24px 20px 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .drawer-header h3 {
+            font-size: 19px;
+            font-weight: 500;
+        }
+        .drawer-header button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .drawer-avatar-section {
+            background-color: #fff;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .drawer-avatar-wrapper {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .drawer-avatar-large {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--wa-teal);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            padding: 10px;
+        }
+
+        .drawer-avatar-wrapper:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .profile-setting-block {
+            background-color: #fff;
+            padding: 14px 30px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .profile-setting-block label {
+            font-size: 12px;
+            color: var(--wa-teal);
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .profile-value-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+        }
+        .profile-value-display input {
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 16px;
+            padding: 2px 0;
+            width: 80%;
+            outline: none;
+        }
+
+        .matrix-options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .matrix-radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14.5px;
+            cursor: pointer;
+        }
+
+        .btn-logout {
+            margin: 20px 30px;
+            padding: 12px;
+            background-color: #ea4335;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* REELS FEED MODAL */
+        .reels-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .reels-modal.open {
+            display: flex;
+        }
+
+        .reels-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            z-index: 210;
+        }
+
+        .reels-feed-container {
+            width: 100%;
+            max-width: 420px;
+            height: 90vh;
+            overflow-y: scroll;
+            snap-type: y mandatory;
+            border-radius: 12px;
+            background: #000;
+            scrollbar-width: none;
+        }
+        .reels-feed-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .reel-card {
+            width: 100%;
+            height: 90vh;
+            snap-align: start;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+
+        .reel-card video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .reel-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 16px;
+            right: 16px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        .reel-overlay h4 {
+            font-size: 16px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .reel-overlay p {
+            font-size: 14px;
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Status Banner -->
+        <div id="status-banner" class="status-bar status-offline">
+            ⚠ Backend Connection Offline (Trying http://127.0.0.1:8000)
+        </div>
+
+        <!-- Auth View -->
+        <div id="auth-screen" class="auth-screen">
+            <div class="auth-card">
+                <h2>Welcome to Chapp</h2>
+                <p>Real-time Translation Matrix & Reels Pipeline Engine</p>
+                <form id="auth-form">
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" id="auth-username" placeholder="Enter username name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="auth-phone" placeholder="e.g. +1234567890" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Initialize Chapp Account</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div id="main-workspace" class="main-workspace">
+            
+            <!-- Profile Drawer -->
+            <div id="profile-drawer" class="profile-drawer">
+                <div class="drawer-header">
+                    <button id="close-profile-btn">←</button>
+                    <h3>Profile & Matrix Settings</h3>
+                </div>
+                <div class="drawer-body">
+                    <div class="drawer-avatar-section">
+                        <div class="drawer-avatar-wrapper" id="change-avatar-btn">
+                            <div id="drawer-avatar" class="drawer-avatar-large">U</div>
+                            <div class="avatar-overlay">
+                                <span>📷</span>
+                                <span>CHANGE PROFILE PHOTO</span>
+                            </div>
+                        </div>
+                        <input type="file" id="profile-pic-file" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div class="profile-setting-block">
+                        <label>Your Name</label>
+                        <div class="profile-value-display">
+                            <input type="text" id="profile-username-input">
+                        </div>
+                    </div>
+
+                    <div class="profile-setting-block">
+                        <label>Phone Number</label>
+                        <div class="profile-value-display" style="color: var(--wa-text-sub);" id="profile-phone-display">
+                            +000000000
+                        </div>
+                    </div>
+
+                    <div class="profile-setting-block">
+                        <label>Subscription Matrix Level</label>
+                        <div class="matrix-options-container">
+                            <label class="matrix-radio-label">
+                                <input type="radio" name="sub-tier" id="tier-free" value="free" checked>
+                                Standard (Free)
+                            </label>
+                            <label class="matrix-radio-label">
+                                <input type="radio" name="sub-tier" id="tier-premium" value="premium">
+                                Premium Pro Matrix
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="logout-btn" class="btn-logout">Log Out / Reset Session</button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="user-header">
+                    <div class="user-info-trigger" id="open-profile-btn">
+                        <div id="user-avatar" class="avatar-circle">U</div>
+                        <div class="user-meta">
+                            <h4 id="user-display-name">Username</h4>
+                            <span id="user-display-tier">[Standard]</span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button id="gear-profile-btn" title="Open Settings">⚙</button>
+                    </div>
+                </div>
+
+                <div class="search-contact-bar">
+                    <input type="text" id="new-contact-phone" placeholder="Contact Number">
+                    <button id="add-contact-btn">Add Contact</button>
+                </div>
+
+                <div class="contact-list" id="contacts-container"></div>
+
+                <!-- Reels Section -->
+                <div class="reels-pipeline-panel">
+                    <h5>🎞 Reels Pipeline</h5>
+                    
+                    <button type="button" id="open-reels-feed-btn" class="btn-secondary">
+                        ▶ Watch Reels Feed
+                    </button>
+
+                    <form id="reels-form">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <input type="file" id="videoFile" accept="video/mp4,video/*" style="padding: 6px; font-size: 13px;" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <input type="text" id="caption" placeholder="Caption details..." style="padding: 6px; font-size: 13px;">
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 6px; font-size: 13px;">Upload from PC</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Chat Dashboard -->
+            <div class="chat-dashboard">
+                <div id="welcome-view" class="welcome-fallback">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="Chapp logo" width="80" style="opacity: 0.7;">
+                    <h3>Chapp Web</h3>
+                    <p>Send and receive real-time messages run through automated neural engines. Link up execution targets inside your contact tree to begin streaming.</p>
+                </div>
+
+                <div id="chat-stream-view" class="chat-stream-container">
+                    <div class="chat-header">
+                        <div class="chat-target-meta">
+                            <div class="avatar-circle" style="background-color: #667781;">C</div>
+                            <div>
+                                <h5 id="active-target-title">Real-time Translation Sync Open</h5>
+                                <p style="font-size: 12px; color: var(--wa-text-sub);" id="active-target-subtitle">+000000</p>
+                            </div>
+                        </div>
+                        <div class="translation-matrix-control">
+                            <label>Translate to:</label>
+                            <select id="target-language-select">
+                                <option value="EN-US" selected>English</option>
+                                <option value="ES">Spanish</option>
+                                <option value="FR">French</option>
+                                <option value="JA">Japanese</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="messages-window" id="messages-container"></div>
+
+                    <div class="entry-interaction-tray">
+                        <input type="text" id="typed-message-input" placeholder="Type a message...">
+                        <button id="send-message-btn">➔</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- FULLSCREEN REELS FEED MODAL -->
+    <div id="reels-modal" class="reels-modal">
+        <span id="close-reels-modal" class="reels-modal-close">✕</span>
+        <div class="reels-feed-container" id="reels-feed-container">
+            <!-- Dynamic Reel Video Cards Injected Here -->
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:8000";
+        const WS_BASE_URL = "ws://127.0.0.1:8000";
+
+        let currentUser = { phone_number: "", username: "", is_paid: false, profilePic: null };
+        let activeContactPhone = null;
+        let activeContactsList = [];
+        let socketConnection = null;
+
+        const statusBanner = document.getElementById("status-banner");
+        const authScreen = document.getElementById("auth-screen");
+        const mainWorkspace = document.getElementById("main-workspace");
+        const authForm = document.getElementById("auth-form");
+        const contactsContainer = document.getElementById("contacts-container");
+        const welcomeView = document.getElementById("welcome-view");
+        const chatStreamView = document.getElementById("chat-stream-view");
+        const messagesContainer = document.getElementById("messages-container");
+        const typedMessageInput = document.getElementById("typed-message-input");
+        const targetLanguageSelect = document.getElementById("target-language-select");
+        const profileDrawer = document.getElementById("profile-drawer");
+
+        const openProfileBtn = document.getElementById("open-profile-btn");
+        const gearProfileBtn = document.getElementById("gear-profile-btn");
+        const closeProfileBtn = document.getElementById("close-profile-btn");
+        const profileUsernameInput = document.getElementById("profile-username-input");
+        const profilePhoneDisplay = document.getElementById("profile-phone-display");
+        const logoutBtn = document.getElementById("logout-btn");
+        const tierFreeRadio = document.getElementById("tier-free");
+        const tierPremiumRadio = document.getElementById("tier-premium");
+        const changeAvatarBtn = document.getElementById("change-avatar-btn");
+        const profilePicFile = document.getElementById("profile-pic-file");
+
+        // Reels Modal Elements
+        const openReelsFeedBtn = document.getElementById("open-reels-feed-btn");
+        const reelsModal = document.getElementById("reels-modal");
+        const closeReelsModal = document.getElementById("close-reels-modal");
+        const reelsFeedContainer = document.getElementById("reels-feed-container");
+
+        function updateUserAvatarDisplay() {
+            const userAvatar = document.getElementById("user-avatar");
+            const drawerAvatar = document.getElementById("drawer-avatar");
+
+            if (currentUser.profilePic) {
+                userAvatar.style.backgroundImage = `url(${currentUser.profilePic})`;
+                userAvatar.innerText = "";
+                drawerAvatar.style.backgroundImage = `url(${currentUser.profilePic})`;
+                drawerAvatar.innerText = "";
+            } else {
+                userAvatar.style.backgroundImage = "none";
+                userAvatar.innerText = currentUser.username ? currentUser.username.charAt(0) : "U";
+                drawerAvatar.style.backgroundImage = "none";
+                drawerAvatar.innerText = currentUser.username ? currentUser.username.charAt(0) : "U";
+            }
+        }
+
+        async function runHealthCheck() {
+            try {
+                await fetch(`${API_BASE_URL}/api/chats/check_health`).catch(e => {});
+                statusBanner.className = "status-bar status-online";
+                statusBanner.innerText = "✓ Backend Connection Online";
+            } catch (err) {
+                statusBanner.className = "status-bar status-offline";
+                statusBanner.innerText = "⚠ Backend Connection Offline (Trying http://127.0.0.1:8000)";
+            }
+        }
+        setInterval(runHealthCheck, 4000);
+        runHealthCheck();
+
+        authForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("auth-username").value.trim();
+            const phone = document.getElementById("auth-phone").value.trim();
+
+            if (!username || !phone) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone_number: phone, username: username })
+                });
+                const data = await response.json();
+                
+                if (data.status === "success") {
+                    currentUser.phone_number = data.phone_number;
+                    currentUser.username = data.username;
+                    currentUser.is_paid = false;
+
+                    document.getElementById("user-display-name").innerText = currentUser.username;
+                    document.getElementById("user-display-tier").innerText = "[Standard]";
+                    profileUsernameInput.value = currentUser.username;
+                    profilePhoneDisplay.innerText = currentUser.phone_number;
+                    tierFreeRadio.checked = true;
+
+                    updateUserAvatarDisplay();
+
+                    authScreen.style.display = "none";
+                    mainWorkspace.style.display = "flex";
+
+                    initWebSocket();
+                    await fetchActiveContacts();
+                }
+            } catch (err) {
+                alert("Authentication Failed. Ensure your backend is running on port 8000!");
+            }
+        });
+
+        openProfileBtn.addEventListener("click", () => profileDrawer.classList.add("open"));
+        gearProfileBtn.addEventListener("click", () => profileDrawer.classList.add("open"));
+        closeProfileBtn.addEventListener("click", () => profileDrawer.classList.remove("open"));
+
+        changeAvatarBtn.addEventListener("click", () => profilePicFile.click());
+        profilePicFile.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    currentUser.profilePic = evt.target.result;
+                    updateUserAvatarDisplay();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        profileUsernameInput.addEventListener("change", async () => {
+            const updatedName = profileUsernameInput.value.trim();
+            if (!updatedName) return;
+            try {
+                await fetch(`${API_BASE_URL}/api/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone_number: currentUser.phone_number, username: updatedName })
+                });
+                currentUser.username = updatedName;
+                document.getElementById("user-display-name").innerText = updatedName;
+                updateUserAvatarDisplay();
+            } catch (e) {
+                console.error("Failed to update profile name:", e);
+            }
+        });
+
+        tierFreeRadio.addEventListener("change", () => {
+            if (tierFreeRadio.checked) {
+                currentUser.is_paid = false;
+                document.getElementById("user-display-tier").innerText = "[Standard]";
+            }
+        });
+        tierPremiumRadio.addEventListener("change", () => {
+            if (tierPremiumRadio.checked) {
+                currentUser.is_paid = true;
+                document.getElementById("user-display-tier").innerText = "[Matrix Premium]";
+            }
+        });
+
+        logoutBtn.addEventListener("click", () => {
+            if (socketConnection) socketConnection.close();
+            currentUser = { phone_number: "", username: "", is_paid: false, profilePic: null };
+            activeContactPhone = null;
+            activeContactsList = [];
+            contactsContainer.innerHTML = "";
+            messagesContainer.innerHTML = "";
+            authForm.reset();
+            profileDrawer.classList.remove("open");
+            chatStreamView.style.display = "none";
+            welcomeView.style.display = "flex";
+            mainWorkspace.style.display = "none";
+            authScreen.style.display = "flex";
+            updateUserAvatarDisplay();
+        });
+
+        async function fetchActiveContacts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chats/${currentUser.phone_number}`);
+                const data = await response.json();
+                activeContactsList = data;
+                renderContacts();
+            } catch (err) {
+                console.error("Error synchronizing active contacts:", err);
+            }
+        }
+
+        document.getElementById("add-contact-btn").addEventListener("click", () => {
+            const input = document.getElementById("new-contact-phone");
+            const targetPhone = input.value.trim();
+            if (!targetPhone || targetPhone === currentUser.phone_number) return;
+
+            if (!activeContactsList.includes(targetPhone)) {
+                activeContactsList.push(targetPhone);
+            }
+            renderContacts();
+            selectContactStream(targetPhone);
+            input.value = "";
+        });
+
+        function renderContacts() {
+            contactsContainer.innerHTML = "";
+            activeContactsList.forEach(phone => {
+                const item = document.createElement("div");
+                item.className = `contact-item ${activeContactPhone === phone ? 'active' : ''}`;
+                item.innerHTML = `
+                    <div class="avatar-circle" style="background-color: #5bb3a2;">📱</div>
+                    <div class="contact-details">
+                        <h5>${phone}</h5>
+                        <p>Real-time Translation Sync Open</p>
+                    </div>
+                `;
+                item.addEventListener("click", () => selectContactStream(phone));
+                contactsContainer.appendChild(item);
+            });
+        }
+
+        async function selectContactStream(phone) {
+            activeContactPhone = phone;
+            renderContacts();
+            
+            welcomeView.style.display = "none";
+            chatStreamView.style.display = "flex";
+            document.getElementById("active-target-subtitle").innerText = phone;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/history/${currentUser.phone_number}/${phone}`);
+                const history = await response.json();
+                
+                messagesContainer.innerHTML = "";
+                history.forEach(msg => {
+                    const isOut = (msg.sender_phone === currentUser.phone_number);
+                    appendBubbleMessage(
+                        msg.original_text, 
+                        isOut, 
+                        msg.timestamp ? msg.timestamp.split(" ")[1] || msg.timestamp : ""
+                    );
+                });
+                scrollChatToBottom();
+            } catch (err) {
+                console.error("Could not fetch chat history:", err);
+            }
+        }
+
+        targetLanguageSelect.addEventListener("change", async () => {
+            if (!activeContactPhone) return;
+            const chosenLang = targetLanguageSelect.value;
+            
+            try {
+                await fetch(`${API_BASE_URL}/api/set-language`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        reader_phone: currentUser.phone_number,
+                        sender_phone: activeContactPhone,
+                        target_lang: chosenLang
+                    })
+                });
+            } catch (err) {
+                console.error("Could not process language matrix update:", err);
+            }
+        });
+
+        function initWebSocket() {
+            socketConnection = new WebSocket(`${WS_BASE_URL}/ws/${currentUser.phone_number}`);
+            
+            socketConnection.onmessage = (event) => {
+                const incoming = JSON.parse(event.data);
+                
+                if (incoming.sender_phone === activeContactPhone) {
+                    const textToShow = incoming.was_translated ? incoming.translated_text : incoming.original_text;
+                    const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    appendBubbleMessage(textToShow, false, timestampStr);
+                    scrollChatToBottom();
+                }
+                fetchActiveContacts();
+            };
+
+            socketConnection.onclose = () => {
+                setTimeout(initWebSocket, 3000);
+            };
+        }
+
+        function executeSendMessage() {
+            const rawText = typedMessageInput.value.trim();
+            if (!rawText || !activeContactPhone || !socketConnection) return;
+
+            const payload = { recipient_phone: activeContactPhone, text: rawText };
+            socketConnection.send(JSON.stringify(payload));
+            
+            const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            appendBubbleMessage(rawText, true, timestampStr);
+            scrollChatToBottom();
+            typedMessageInput.value = "";
+        }
+
+        document.getElementById("send-message-btn").addEventListener("click", executeSendMessage);
+        typedMessageInput.addEventListener("keydown", (e) => { if (e.key === "Enter") executeSendMessage(); });
+
+        function appendBubbleMessage(text, isOutgoing, timeStr) {
+            const bubble = document.createElement("div");
+            bubble.className = `message-bubble ${isOutgoing ? 'bubble-out' : 'bubble-in'}`;
+            bubble.innerHTML = `
+                <div>${text}</div>
+                <span class="bubble-timestamp">${timeStr}</span>
+            `;
+            messagesContainer.appendChild(bubble);
+        }
+
+        function scrollChatToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Updated Upload Function Integrated into the Reels Form Event
+        async function uploadVideo(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById("videoFile");
+            const captionInput = document.getElementById("caption");
+
+            if (!fileInput.files[0]) {
+                alert("Please select a video file.");
+                return;
+            }
+
+            // Create Multipart Form Data
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]); // Key MUST match backend endpoint definition
+            formData.append("uploader_phone", currentUser.phone_number || "Anonymous");
+            formData.append("caption", captionInput ? captionInput.value : "");
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/videos/upload-file`, {
+                    method: "POST",
+                    body: formData // DO NOT set Content-Type header manually; fetch sets it with boundary
+                });
+
+                if (!response.ok) {
+                    // Read JSON detail from FastAPI error response
+                    const errorData = await response.json().catch(() => null);
+                    const detailMsg = errorData?.detail || `Server returned status ${response.status}`;
+                    console.error("Upload server error details:", errorData);
+                    alert("Upload error: " + detailMsg);
+                    return;
+                }
+
+                const result = await response.json();
+                console.log("Upload Success:", result);
+                alert("Video uploaded successfully!");
+                document.getElementById("reels-form").reset();
+
+            } catch (err) {
+                console.error("Fetch exception:", err);
+                alert("Network Error: " + err.message);
+            }
+        }
+
+        // Bind form submit to uploadVideo
+        document.getElementById("reels-form").addEventListener("submit", uploadVideo);
+
+        // REELS FEED WATCH & SCROLL FUNCTIONALITY
+        openReelsFeedBtn.addEventListener("click", async () => {
+            await fetchAndRenderReelsFeed();
+            reelsModal.classList.add("open");
+        });
+
+        closeReelsModal.addEventListener("click", () => {
+            reelsModal.classList.remove("open");
+            // Pause all playing videos when closing modal
+            const videos = reelsFeedContainer.querySelectorAll("video");
+            videos.forEach(v => v.pause());
+        });
+
+        async function fetchAndRenderReelsFeed() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/videos/feed?viewer_phone=${currentUser.phone_number}`);
+                const data = await response.json();
+
+                reelsFeedContainer.innerHTML = "";
+
+                if (!data.reels || data.reels.length === 0) {
+                    reelsFeedContainer.innerHTML = `
+                        <div style="color: white; text-align: center; padding-top: 40%; font-size: 15px;">
+                            No Reels available yet.<br>Upload one from the sidebar!
+                        </div>
+                    `;
+                    return;
+                }
+
+                data.reels.forEach((reel, index) => {
+                    const reelCard = document.createElement("div");
+                    reelCard.className = "reel-card";
+                    reelCard.innerHTML = `
+                        <video src="${reel.video_url}" controls loop playsinline ${index === 0 ? 'autoplay' : ''}></video>
+                        <div class="reel-overlay">
+                            <h4>👤 ${reel.uploader_phone}</h4>
+                            <p>${reel.caption || "No caption provided."}</p>
+                        </div>
+                    `;
+                    reelsFeedContainer.appendChild(reelCard);
+                });
+
+                // Auto-play active video on scroll
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const video = entry.target.querySelector("video");
+                        if (entry.isIntersecting) {
+                            video.play().catch(() => {});
+                        } else {
+                            video.pause();
+                        }
+                    });
+                }, { threshold: 0.6 });
+
+                document.querySelectorAll(".reel-card").forEach(card => observer.observe(card));
+
+            } catch (err) {
+                console.error("Failed to load Reels feed:", err);
+                reelsFeedContainer.innerHTML = `
+                    <div style="color: white; text-align: center; padding-top: 40%;">
+                        Failed to load Reels from server.
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
